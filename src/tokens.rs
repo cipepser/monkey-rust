@@ -19,7 +19,7 @@ pub struct TokenStruct {
 pub type Token = Annot<TokenStruct>;
 
 impl Token {
-    fn number(n: u64, loc: Loc) -> Self {
+    pub fn number(n: u64, loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::Number(n),
@@ -28,7 +28,7 @@ impl Token {
             loc,
         )
     }
-    fn plus(loc: Loc) -> Self {
+    pub fn plus(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::Plus,
@@ -37,7 +37,7 @@ impl Token {
             loc,
         )
     }
-    fn minus(loc: Loc) -> Self {
+    pub fn minus(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::Minus,
@@ -46,7 +46,7 @@ impl Token {
             loc,
         )
     }
-    fn asterisk(loc: Loc) -> Self {
+    pub fn asterisk(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::Asterisk,
@@ -55,7 +55,7 @@ impl Token {
             loc,
         )
     }
-    fn slash(loc: Loc) -> Self {
+    pub fn slash(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::Slash,
@@ -64,7 +64,7 @@ impl Token {
             loc,
         )
     }
-    fn lparen(loc: Loc) -> Self {
+    pub fn lparen(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::LParen,
@@ -73,7 +73,7 @@ impl Token {
             loc,
         )
     }
-    fn rparen(loc: Loc) -> Self {
+    pub fn rparen(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
                 kind: TokenKind::RParen,
