@@ -24,7 +24,7 @@ impl<T> Annot<T> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum LexErrorKind {
-    InvalidChar(char),
+    InvalidChar(char), // TODO: 名前をInvalidまでにする
     Eof,
 }
 
