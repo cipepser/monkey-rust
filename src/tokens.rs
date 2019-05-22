@@ -11,9 +11,10 @@ pub enum TokenKind {
     RParen,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct TokenStruct {
-    kind: TokenKind,
-    literal: String,
+    pub kind: TokenKind,
+    pub literal: String,
 }
 
 pub type Token = Annot<TokenStruct>;

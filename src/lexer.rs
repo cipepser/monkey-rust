@@ -1,4 +1,4 @@
-use crate::tokens::Token;
+use crate::tokens::{Token, TokenStruct, TokenKind};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct Loc(usize, usize);
@@ -138,4 +138,120 @@ fn recognize_many(input: &[u8], mut pos: usize, mut f: impl FnMut(u8) -> bool) -
         pos += 1;
     }
     pos
+}
+
+#[test]
+fn test_lexer() {
+    assert_eq!(
+        lex("1"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Number(1),
+                    literal: "1".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("10"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Number(10),
+                    literal: "10".to_string(),
+                },
+                loc: Loc(0, 2),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("+"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Plus,
+                    literal: "+".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("-"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Minus,
+                    literal: "-".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("*"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Asterisk,
+                    literal: "*".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("/"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Slash,
+                    literal: "/".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("("),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::LParen,
+                    literal: "(".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex(")"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::RParen,
+                    literal: ")".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("1 + 2 * 3 - -10"),
+        Ok(vec![
+            Token::number(1, Loc(0, 1)),
+            Token::plus(Loc(2, 3)),
+            Token::number(2, Loc(4, 5)),
+            Token::asterisk(Loc(6, 7)),
+            Token::number(3, Loc(8, 9)),
+            Token::minus(Loc(10, 11)),
+            Token::minus(Loc(12, 13)),
+            Token::number(10, Loc(13, 15)),
+        ])
+    );
 }
