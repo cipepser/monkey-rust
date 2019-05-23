@@ -2,7 +2,7 @@ use crate::lexer::{Annot, Loc};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TokenKind {
-    Int(u64), // TODO: Intに変える
+    Int(u64),
     Plus,
     Minus,
     Asterisk,
