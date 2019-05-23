@@ -125,7 +125,7 @@ fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
         .unwrap()
         .parse()
         .unwrap();
-    Ok((Token::number(n, Loc(start, end)), end))
+    Ok((Token::int(n, Loc(start, end)), end))
 }
 
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
@@ -147,7 +147,7 @@ fn test_lexer() {
         Ok(vec![
             Token {
                 value: TokenStruct {
-                    kind: TokenKind::Number(1),
+                    kind: TokenKind::Int(1),
                     literal: "1".to_string(),
                 },
                 loc: Loc(0, 1),
@@ -160,7 +160,7 @@ fn test_lexer() {
         Ok(vec![
             Token {
                 value: TokenStruct {
-                    kind: TokenKind::Number(10),
+                    kind: TokenKind::Int(10),
                     literal: "10".to_string(),
                 },
                 loc: Loc(0, 2),
@@ -244,14 +244,14 @@ fn test_lexer() {
     assert_eq!(
         lex("1 + 2 * 3 - -10"),
         Ok(vec![
-            Token::number(1, Loc(0, 1)),
+            Token::int(1, Loc(0, 1)),
             Token::plus(Loc(2, 3)),
-            Token::number(2, Loc(4, 5)),
+            Token::int(2, Loc(4, 5)),
             Token::asterisk(Loc(6, 7)),
-            Token::number(3, Loc(8, 9)),
+            Token::int(3, Loc(8, 9)),
             Token::minus(Loc(10, 11)),
             Token::minus(Loc(12, 13)),
-            Token::number(10, Loc(13, 15)),
+            Token::int(10, Loc(13, 15)),
         ])
     );
 }

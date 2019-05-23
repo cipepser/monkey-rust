@@ -2,7 +2,7 @@ use crate::lexer::{Annot, Loc};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TokenKind {
-    Number(u64), // TODO: Intに変える
+    Int(u64), // TODO: Intに変える
     Plus,
     Minus,
     Asterisk,
@@ -21,10 +21,10 @@ pub struct TokenStruct {
 pub type Token = Annot<TokenStruct>;
 
 impl Token {
-    pub fn number(n: u64, loc: Loc) -> Self {
+    pub fn int(n: u64, loc: Loc) -> Self {
         Self::new(
             TokenStruct {
-                kind: TokenKind::Number(n),
+                kind: TokenKind::Int(n),
                 literal: n.to_string(),
             },
             loc,
