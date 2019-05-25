@@ -394,6 +394,31 @@ fn test_lexer() {
             }
         ])
     );
+    assert_eq!(
+        lex("<"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Lt,
+                    literal: "<".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex(">"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Gt,
+                    literal: ">".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+
     // delimiter
     assert_eq!(
         lex(","),
