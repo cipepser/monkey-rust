@@ -53,17 +53,27 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
 
     while pos < input.len() {
         match input[pos] {
+            // identifier and literal
             b'0'...b'9' => lex_a_token!(lex_number(input, pos)),
+            // operator
             b'+' => lex_a_token!(lex_plus(input, pos)),
             b'-' => lex_a_token!(lex_minus(input, pos)),
             b'*' => lex_a_token!(lex_asterisk(input, pos)),
             b'/' => lex_a_token!(lex_slash(input, pos)),
+            // delimiter
+            b',' => lex_a_token!(lex_comma(input, pos)),
+            b';' => lex_a_token!(lex_semicolon(input, pos)),
+            b':' => lex_a_token!(lex_colon(input, pos)),
+            // brackets
             b'(' => lex_a_token!(lex_lparen(input, pos)),
             b')' => lex_a_token!(lex_rparen(input, pos)),
             b'{' => lex_a_token!(lex_lbrace(input, pos)),
             b'}' => lex_a_token!(lex_rbrace(input, pos)),
             b'[' => lex_a_token!(lex_lbracket(input, pos)),
             b']' => lex_a_token!(lex_rbracket(input, pos)),
+            // keyword
+
+            // others
             b' ' | b'\n' | b'\t' => {
                 let ((), p) = skip_spaces(input, pos)?;
                 pos = p;
@@ -89,6 +99,21 @@ fn consume_byte(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError
     Ok((b, pos + 1))
 }
 
+// identifier and literal
+fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    use std::str::from_utf8;
+
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"1234567890".contains(&b));
+
+    let n = from_utf8(&input[start..end])
+        .unwrap()
+        .parse()
+        .unwrap();
+    Ok((Token::int(n, Loc(start, end)), end))
+}
+
+// operator
 fn lex_plus(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b'+')
         .map(|(_, end)| (Token::plus(Loc(start, end)), end))
@@ -109,6 +134,23 @@ fn lex_slash(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
         .map(|(_, end)| (Token::slash(Loc(start, end)), end))
 }
 
+// delimiter
+fn lex_comma(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b',')
+        .map(|(_, end)| (Token::comma(Loc(start, end)), end))
+}
+
+fn lex_semicolon(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b';')
+        .map(|(_, end)| (Token::semicolon(Loc(start, end)), end))
+}
+
+fn lex_colon(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b':')
+        .map(|(_, end)| (Token::colon(Loc(start, end)), end))
+}
+
+// brackets
 fn lex_lparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b'(')
         .map(|(_, end)| (Token::lparen(Loc(start, end)), end))
@@ -139,19 +181,9 @@ fn lex_rbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> 
         .map(|(_, end)| (Token::rbracket(Loc(start, end)), end))
 }
 
-fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
-    use std::str::from_utf8;
+// keyword
 
-    let start = pos;
-    let end = recognize_many(input, start, |b| b"1234567890".contains(&b));
-
-    let n = from_utf8(&input[start..end])
-        .unwrap()
-        .parse()
-        .unwrap();
-    Ok((Token::int(n, Loc(start, end)), end))
-}
-
+// utilities
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
     let pos = recognize_many(input, pos, |b| b" \n\t".contains(&b));
     Ok(((), pos))
@@ -166,6 +198,7 @@ fn recognize_many(input: &[u8], mut pos: usize, mut f: impl FnMut(u8) -> bool) -
 
 #[test]
 fn test_lexer() {
+    // identifier and literal
     assert_eq!(
         lex("1"),
         Ok(vec![
@@ -192,6 +225,7 @@ fn test_lexer() {
         ])
     );
 
+    // operator
     assert_eq!(
         lex("+"),
         Ok(vec![
@@ -240,6 +274,46 @@ fn test_lexer() {
             }
         ])
     );
+    // delimiter
+    assert_eq!(
+        lex(","),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Comma,
+                    literal: ",".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex(";"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::SemiColon,
+                    literal: ";".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex(":"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Colon,
+                    literal: ":".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+
+
+    // brackets
     assert_eq!(
         lex("("),
         Ok(vec![
@@ -313,6 +387,10 @@ fn test_lexer() {
         ])
     );
 
+    // keyword
+
+
+    // others
     assert_eq!(
         lex("1 + 2 * 3 - -10"),
         Ok(vec![

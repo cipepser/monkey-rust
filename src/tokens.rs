@@ -11,7 +11,10 @@ pub enum TokenKind {
     Asterisk,
     Slash,
 
-    // delimitor
+    // delimiter
+    Comma,
+    SemiColon,
+    Colon,
 
     // brackets
     LParen,
@@ -33,6 +36,7 @@ pub struct TokenStruct {
 pub type Token = Annot<TokenStruct>;
 
 impl Token {
+    // identifier and literal
     pub fn int(n: u64, loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -42,6 +46,8 @@ impl Token {
             loc,
         )
     }
+
+    // operator
     pub fn plus(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -78,6 +84,37 @@ impl Token {
             loc,
         )
     }
+
+    // delimiter
+    pub fn comma(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Comma,
+                literal: ",".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn semicolon(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::SemiColon,
+                literal: ";".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn colon(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Colon,
+                literal: ":".to_string(),
+            },
+            loc,
+        )
+    }
+
+    // brackets
     pub fn lparen(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -132,4 +169,5 @@ impl Token {
             loc,
         )
     }
+    // keyword
 }
