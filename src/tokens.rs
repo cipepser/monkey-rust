@@ -2,14 +2,26 @@ use crate::lexer::{Annot, Loc};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum TokenKind {
+    // identifier and literal
     Int(u64),
+
+    // operator
     Plus,
     Minus,
     Asterisk,
     Slash,
+
+    // delimitor
+
+    // brackets
     LParen,
     RParen,
-    // TODO: 他のトークンを追加する
+    LBrace,
+    RBrace,
+    LBracket,
+    RBracket,
+
+    // keyword
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -80,6 +92,42 @@ impl Token {
             TokenStruct {
                 kind: TokenKind::RParen,
                 literal: ")".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn lbrace(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::LBrace,
+                literal: "{".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn rbrace(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::RBrace,
+                literal: "}".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn lbracket(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::LBracket,
+                literal: "[".to_string(),
+            },
+            loc,
+        )
+    }
+    pub fn rbracket(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::RBracket,
+                literal: "]".to_string(),
             },
             loc,
         )

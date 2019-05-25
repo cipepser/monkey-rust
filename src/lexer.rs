@@ -60,6 +60,10 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'/' => lex_a_token!(lex_slash(input, pos)),
             b'(' => lex_a_token!(lex_lparen(input, pos)),
             b')' => lex_a_token!(lex_rparen(input, pos)),
+            b'{' => lex_a_token!(lex_lbrace(input, pos)),
+            b'}' => lex_a_token!(lex_rbrace(input, pos)),
+            b'[' => lex_a_token!(lex_lbracket(input, pos)),
+            b']' => lex_a_token!(lex_rbracket(input, pos)),
             b' ' | b'\n' | b'\t' => {
                 let ((), p) = skip_spaces(input, pos)?;
                 pos = p;
@@ -113,6 +117,26 @@ fn lex_lparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
 fn lex_rparen(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b')')
         .map(|(_, end)| (Token::rparen(Loc(start, end)), end))
+}
+
+fn lex_lbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'{')
+        .map(|(_, end)| (Token::lbrace(Loc(start, end)), end))
+}
+
+fn lex_rbrace(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'}')
+        .map(|(_, end)| (Token::rbrace(Loc(start, end)), end))
+}
+
+fn lex_lbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'[')
+        .map(|(_, end)| (Token::lbracket(Loc(start, end)), end))
+}
+
+fn lex_rbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b']')
+        .map(|(_, end)| (Token::rbracket(Loc(start, end)), end))
 }
 
 fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
@@ -235,6 +259,54 @@ fn test_lexer() {
                 value: TokenStruct {
                     kind: TokenKind::RParen,
                     literal: ")".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("{"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::LBrace,
+                    literal: "{".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("}"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::RBrace,
+                    literal: "}".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("["),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::LBracket,
+                    literal: "[".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("]"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::RBracket,
+                    literal: "]".to_string(),
                 },
                 loc: Loc(0, 1),
             }
