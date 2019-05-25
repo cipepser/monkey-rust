@@ -3,7 +3,7 @@ use crate::lexer::{Annot, Loc};
 use std::collections::HashMap;
 
 lazy_static! {
-    static ref KEYWORDS: HashMap<&'static str, TokenKind> = {
+    pub static ref KEYWORDS: HashMap<&'static str, TokenKind> = {
         let mut m = HashMap::new();
         m.insert("fn", TokenKind::Function);
         m.insert("let", TokenKind::Let);

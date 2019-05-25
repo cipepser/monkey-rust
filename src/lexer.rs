@@ -72,8 +72,6 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'}' => lex_a_token!(lex_rbrace(input, pos)),
             b'[' => lex_a_token!(lex_lbracket(input, pos)),
             b']' => lex_a_token!(lex_rbracket(input, pos)),
-            // keyword
-
             // others
             b' ' | b'\n' | b'\t' => {
                 let ((), p) = skip_spaces(input, pos)?;
@@ -94,7 +92,18 @@ fn lex_char(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
 
     let s = from_utf8(&input[start..end])
         .unwrap();
-    Ok((Token::ident(&s.to_string(), Loc(start, end)), end))
+
+    match s {
+        "fn" => Ok((Token::function(Loc(start, end)), end)),
+        "let" => Ok((Token::my_let(Loc(start, end)), end)),
+        "true" => Ok((Token::my_true(Loc(start, end)), end)),
+        "false" => Ok((Token::my_false(Loc(start, end)), end)),
+        "if" => Ok((Token::my_if(Loc(start, end)), end)),
+        "else" => Ok((Token::my_else(Loc(start, end)), end)),
+        "return" => Ok((Token::my_return(Loc(start, end)), end)),
+        "macro" => Ok((Token::my_macro(Loc(start, end)), end)),
+        _ => Ok((Token::ident(&s.to_string(), Loc(start, end)), end))
+    }
 }
 
 fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
@@ -177,8 +186,6 @@ fn lex_rbracket(input: &[u8], start: usize) -> Result<(Token, usize), LexError> 
     consume_byte(input, start, b']')
         .map(|(_, end)| (Token::rbracket(Loc(start, end)), end))
 }
-
-// keyword
 
 // utilities
 fn skip_spaces(input: &[u8], pos: usize) -> Result<((), usize), LexError> {
@@ -453,102 +460,102 @@ fn test_lexer() {
     );
 
     // keyword
-//    assert_eq!(
-//        lex("fn"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::Function,
-//                    literal: "fn".to_string(),
-//                },
-//                loc: Loc(0, 2),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("let"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::Let,
-//                    literal: "let".to_string(),
-//                },
-//                loc: Loc(0, 3),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("true"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::True,
-//                    literal: "true".to_string(),
-//                },
-//                loc: Loc(0, 4),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("false"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::False,
-//                    literal: "false".to_string(),
-//                },
-//                loc: Loc(0, 5),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("if"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::If,
-//                    literal: "if".to_string(),
-//                },
-//                loc: Loc(0, 2),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("else"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::Else,
-//                    literal: "else".to_string(),
-//                },
-//                loc: Loc(0, 4),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("return"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::Return,
-//                    literal: "return".to_string(),
-//                },
-//                loc: Loc(0, 6),
-//            }
-//        ])
-//    );
-//    assert_eq!(
-//        lex("macro"),
-//        Ok(vec![
-//            Token {
-//                value: TokenStruct {
-//                    kind: TokenKind::Macro,
-//                    literal: "macro".to_string(),
-//                },
-//                loc: Loc(0, 5),
-//            }
-//        ])
-//    );
+    assert_eq!(
+        lex("fn"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Function,
+                    literal: "fn".to_string(),
+                },
+                loc: Loc(0, 2),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("let"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Let,
+                    literal: "let".to_string(),
+                },
+                loc: Loc(0, 3),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("true"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::True,
+                    literal: "true".to_string(),
+                },
+                loc: Loc(0, 4),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("false"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::False,
+                    literal: "false".to_string(),
+                },
+                loc: Loc(0, 5),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("if"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::If,
+                    literal: "if".to_string(),
+                },
+                loc: Loc(0, 2),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("else"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Else,
+                    literal: "else".to_string(),
+                },
+                loc: Loc(0, 4),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("return"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Return,
+                    literal: "return".to_string(),
+                },
+                loc: Loc(0, 6),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("macro"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Macro,
+                    literal: "macro".to_string(),
+                },
+                loc: Loc(0, 5),
+            }
+        ])
+    );
 
     // others
     assert_eq!(
