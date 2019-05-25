@@ -1,8 +1,28 @@
 use crate::lexer::{Annot, Loc};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+use std::collections::HashMap;
+
+lazy_static! {
+    static ref KEYWORDS: HashMap<&'static str, TokenKind> = {
+        let mut m = HashMap::new();
+        m.insert("fn", TokenKind::Function);
+        m.insert("let", TokenKind::Let);
+        m.insert("true", TokenKind::True);
+        m.insert("false", TokenKind::False);
+        m.insert("if", TokenKind::If);
+        m.insert("else", TokenKind::Else);
+        m.insert("return", TokenKind::Return);
+        m.insert("macro", TokenKind::Macro);
+        m
+    };
+}
+
+// need Deubg? Debug is not implemented for String.
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum TokenKind {
     // identifier and literal
+    // must have 'static in Ident?
+    Ident(String),
     Int(u64),
 
     // operator
@@ -25,6 +45,14 @@ pub enum TokenKind {
     RBracket,
 
     // keyword
+    Function,
+    Let,
+    True,
+    False,
+    If,
+    Else,
+    Return,
+    Macro,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
@@ -37,6 +65,16 @@ pub type Token = Annot<TokenStruct>;
 
 impl Token {
     // identifier and literal
+    pub fn ident(s: &str, loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Ident(s.to_string()),
+                literal: s.to_string(),
+            },
+            loc,
+        )
+    }
+
     pub fn int(n: u64, loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -57,6 +95,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn minus(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -66,6 +105,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn asterisk(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -75,6 +115,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn slash(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -95,6 +136,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn semicolon(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -104,6 +146,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn colon(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -124,6 +167,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn rparen(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -133,6 +177,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn lbrace(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -142,6 +187,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn rbrace(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -151,6 +197,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn lbracket(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -160,6 +207,7 @@ impl Token {
             loc,
         )
     }
+
     pub fn rbracket(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -169,5 +217,85 @@ impl Token {
             loc,
         )
     }
+
     // keyword
+    pub fn function(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Function,
+                literal: "fn".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_let(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Let,
+                literal: "let".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_true(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::True,
+                literal: "true".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_false(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::False,
+                literal: "false".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_if(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::If,
+                literal: "if".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_else(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Else,
+                literal: "else".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_return(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Return,
+                literal: "return".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn my_macro(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Macro,
+                literal: "macro".to_string(),
+            },
+            loc,
+        )
+    }
 }

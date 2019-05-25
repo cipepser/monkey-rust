@@ -54,6 +54,7 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     while pos < input.len() {
         match input[pos] {
             // identifier and literal
+            b'a'...b'z' | b'A'...b'Z' | b'_' => lex_a_token!(lex_char(input, pos)),
             b'0'...b'9' => lex_a_token!(lex_number(input, pos)),
             // operator
             b'+' => lex_a_token!(lex_plus(input, pos)),
@@ -84,22 +85,18 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     Ok(tokens)
 }
 
-fn consume_byte(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError> {
-    if input.len() <= pos {
-        return Err(LexError::eof(Loc(pos, pos)));
-    }
+// identifier and literal
+fn lex_char(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    use std::str::from_utf8;
 
-    if input[pos] != b {
-        return Err(LexError::invalid_char(
-            input[pos] as char,
-            Loc(pos, pos + 1),
-        ));
-    }
+    let start = pos;
+    let end = recognize_many(input, start, |b| b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_".contains(&b));
 
-    Ok((b, pos + 1))
+    let s = from_utf8(&input[start..end])
+        .unwrap();
+    Ok((Token::ident(&s.to_string(), Loc(start, end)), end))
 }
 
-// identifier and literal
 fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     use std::str::from_utf8;
 
@@ -196,9 +193,77 @@ fn recognize_many(input: &[u8], mut pos: usize, mut f: impl FnMut(u8) -> bool) -
     pos
 }
 
+fn consume_byte(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError> {
+    if input.len() <= pos {
+        return Err(LexError::eof(Loc(pos, pos)));
+    }
+
+    if input[pos] != b {
+        return Err(LexError::invalid_char(
+            input[pos] as char,
+            Loc(pos, pos + 1),
+        ));
+    }
+
+    Ok((b, pos + 1))
+}
+
 #[test]
 fn test_lexer() {
     // identifier and literal
+    assert_eq!(
+        lex("x"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Ident("x".to_string()),
+                    literal: "x".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("two"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Ident("two".to_string()),
+                    literal: "two".to_string(),
+                },
+                loc: Loc(0, 3),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("one two three"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Ident("one".to_string()),
+                    literal: "one".to_string(),
+                },
+                loc: Loc(0, 3),
+            },
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Ident("two".to_string()),
+                    literal: "two".to_string(),
+                },
+                loc: Loc(4, 7),
+            },
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Ident("three".to_string()),
+                    literal: "three".to_string(),
+                },
+                loc: Loc(8, 13),
+            },
+        ])
+    );
+
     assert_eq!(
         lex("1"),
         Ok(vec![
@@ -388,7 +453,102 @@ fn test_lexer() {
     );
 
     // keyword
-
+//    assert_eq!(
+//        lex("fn"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::Function,
+//                    literal: "fn".to_string(),
+//                },
+//                loc: Loc(0, 2),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("let"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::Let,
+//                    literal: "let".to_string(),
+//                },
+//                loc: Loc(0, 3),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("true"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::True,
+//                    literal: "true".to_string(),
+//                },
+//                loc: Loc(0, 4),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("false"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::False,
+//                    literal: "false".to_string(),
+//                },
+//                loc: Loc(0, 5),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("if"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::If,
+//                    literal: "if".to_string(),
+//                },
+//                loc: Loc(0, 2),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("else"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::Else,
+//                    literal: "else".to_string(),
+//                },
+//                loc: Loc(0, 4),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("return"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::Return,
+//                    literal: "return".to_string(),
+//                },
+//                loc: Loc(0, 6),
+//            }
+//        ])
+//    );
+//    assert_eq!(
+//        lex("macro"),
+//        Ok(vec![
+//            Token {
+//                value: TokenStruct {
+//                    kind: TokenKind::Macro,
+//                    literal: "macro".to_string(),
+//                },
+//                loc: Loc(0, 5),
+//            }
+//        ])
+//    );
 
     // others
     assert_eq!(
