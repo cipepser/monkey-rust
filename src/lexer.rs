@@ -57,8 +57,10 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'a'...b'z' | b'A'...b'Z' | b'_' => lex_a_token!(lex_char(input, pos)),
             b'0'...b'9' => lex_a_token!(lex_number(input, pos)),
             // operator
+            b'=' => lex_a_token!(lex_assign(input, pos)),
             b'+' => lex_a_token!(lex_plus(input, pos)),
             b'-' => lex_a_token!(lex_minus(input, pos)),
+            b'!' => lex_a_token!(lex_bang(input, pos)),
             b'*' => lex_a_token!(lex_asterisk(input, pos)),
             b'/' => lex_a_token!(lex_slash(input, pos)),
             // delimiter
@@ -120,6 +122,11 @@ fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
 }
 
 // operator
+fn lex_assign(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'=')
+        .map(|(_, end)| (Token::assign(Loc(start, end)), end))
+}
+
 fn lex_plus(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b'+')
         .map(|(_, end)| (Token::plus(Loc(start, end)), end))
@@ -128,6 +135,11 @@ fn lex_plus(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
 fn lex_minus(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b'-')
         .map(|(_, end)| (Token::minus(Loc(start, end)), end))
+}
+
+fn lex_bang(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'!')
+        .map(|(_, end)| (Token::bang(Loc(start, end)), end))
 }
 
 fn lex_asterisk(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
@@ -299,6 +311,18 @@ fn test_lexer() {
 
     // operator
     assert_eq!(
+        lex("="),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Assign,
+                    literal: "=".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
         lex("+"),
         Ok(vec![
             Token {
@@ -317,6 +341,18 @@ fn test_lexer() {
                 value: TokenStruct {
                     kind: TokenKind::Minus,
                     literal: "-".to_string(),
+                },
+                loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("!"),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Bang,
+                    literal: "!".to_string(),
                 },
                 loc: Loc(0, 1),
             }

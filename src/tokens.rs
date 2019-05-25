@@ -24,12 +24,23 @@ pub enum TokenKind {
     // must have 'static in Ident?
     Ident(String),
     Int(u64),
+    // TODO: implement String
 
     // operator
+    Assign,
     Plus,
     Minus,
+    Bang,
     Asterisk,
     Slash,
+
+// TODO: implement following operators
+//
+//    Lt,
+//    Gt,
+//
+//    EQ,
+//    NOT_EQ,
 
     // delimiter
     Comma,
@@ -86,6 +97,16 @@ impl Token {
     }
 
     // operator
+    pub fn assign(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Assign,
+                literal: "=".to_string(),
+            },
+            loc,
+        )
+    }
+
     pub fn plus(loc: Loc) -> Self {
         Self::new(
             TokenStruct {
@@ -101,6 +122,16 @@ impl Token {
             TokenStruct {
                 kind: TokenKind::Minus,
                 literal: "-".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn bang(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Bang,
+                literal: "!".to_string(),
             },
             loc,
         )
