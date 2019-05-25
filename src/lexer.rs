@@ -57,7 +57,21 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'a'...b'z' | b'A'...b'Z' | b'_' => lex_a_token!(lex_char(input, pos)),
             b'0'...b'9' => lex_a_token!(lex_number(input, pos)),
             // operator
-            b'=' => lex_a_token!(lex_assign(input, pos)),
+            b'=' => {
+                match peek_char(input, pos) {
+                    Ok(b) => {
+                        if b == b'=' {
+                            lex_a_token!(lex_eq(pos))
+                        } else {
+                            lex_a_token!(lex_assign(input, pos))
+                        }
+                    }
+                    Err(e) => match e.value {
+                        LexErrorKind::Eof => lex_a_token!(lex_assign(input, pos)),
+                        _ => return Err(e),
+                    }
+                }
+            }
             b'+' => lex_a_token!(lex_plus(input, pos)),
             b'-' => lex_a_token!(lex_minus(input, pos)),
             b'!' => lex_a_token!(lex_bang(input, pos)),
@@ -164,6 +178,10 @@ fn lex_greater_than(input: &[u8], start: usize) -> Result<(Token, usize), LexErr
         .map(|(_, end)| (Token::greater_than(Loc(start, end)), end))
 }
 
+fn lex_eq(pos: usize) -> Result<(Token, usize), LexError> {
+    Ok((Token::equal(Loc(pos, pos + 2)), pos + 2))
+}
+
 // delimiter
 fn lex_comma(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b',')
@@ -237,6 +255,13 @@ fn consume_byte(input: &[u8], pos: usize, b: u8) -> Result<(u8, usize), LexError
     }
 
     Ok((b, pos + 1))
+}
+
+fn peek_char(input: &[u8], pos: usize) -> Result<u8, LexError> {
+    if input.len() <= pos + 1 {
+        return Err(LexError::eof(Loc(pos, pos)));
+    }
+    Ok(input[pos + 1].clone())
 }
 
 #[test]
@@ -415,6 +440,18 @@ fn test_lexer() {
                     literal: ">".to_string(),
                 },
                 loc: Loc(0, 1),
+            }
+        ])
+    );
+    assert_eq!(
+        lex("=="),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Eq,
+                    literal: "==".to_string(),
+                },
+                loc: Loc(0, 2),
             }
         ])
     );
