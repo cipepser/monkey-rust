@@ -63,6 +63,8 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             b'!' => lex_a_token!(lex_bang(input, pos)),
             b'*' => lex_a_token!(lex_asterisk(input, pos)),
             b'/' => lex_a_token!(lex_slash(input, pos)),
+            b'<' => lex_a_token!(lex_less_than(input, pos)),
+            b'>' => lex_a_token!(lex_greater_than(input, pos)),
             // delimiter
             b',' => lex_a_token!(lex_comma(input, pos)),
             b';' => lex_a_token!(lex_semicolon(input, pos)),
@@ -150,6 +152,16 @@ fn lex_asterisk(input: &[u8], start: usize) -> Result<(Token, usize), LexError> 
 fn lex_slash(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
     consume_byte(input, start, b'/')
         .map(|(_, end)| (Token::slash(Loc(start, end)), end))
+}
+
+fn lex_less_than(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'<')
+        .map(|(_, end)| (Token::less_than(Loc(start, end)), end))
+}
+
+fn lex_greater_than(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
+    consume_byte(input, start, b'>')
+        .map(|(_, end)| (Token::greater_than(Loc(start, end)), end))
 }
 
 // delimiter

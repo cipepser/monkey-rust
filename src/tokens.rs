@@ -34,10 +34,10 @@ pub enum TokenKind {
     Asterisk,
     Slash,
 
+    Lt,
+    Gt,
+
 // TODO: implement following operators
-//
-//    Lt,
-//    Gt,
 //
 //    EQ,
 //    NOT_EQ,
@@ -152,6 +152,26 @@ impl Token {
             TokenStruct {
                 kind: TokenKind::Slash,
                 literal: "/".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn less_than(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Lt,
+                literal: "<".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn greater_than(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Gt,
+                literal: ">".to_string(),
             },
             loc,
         )
