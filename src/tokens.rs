@@ -17,14 +17,12 @@ lazy_static! {
     };
 }
 
-// need Deubg? Debug is not implemented for String.
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum TokenKind {
     // identifier and literal
-    // must have 'static in Ident?
     Ident(String),
     Int(u64),
-    // TODO: implement String
+    Str(String),
 
     // operator
     Assign,
@@ -89,6 +87,16 @@ impl Token {
             TokenStruct {
                 kind: TokenKind::Int(n),
                 literal: n.to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn string(s: &str, loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::Str(s.to_string()),
+                literal: s.to_string(),
             },
             loc,
         )

@@ -25,6 +25,7 @@ impl<T> Annot<T> {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 enum LexErrorKind {
     Invalid(char),
+    UnclosedOpenDoubleQuotation,
     Eof,
 }
 
@@ -33,6 +34,9 @@ type LexError = Annot<LexErrorKind>;
 impl LexError {
     fn invalid_char(c: char, loc: Loc) -> Self {
         LexError::new(LexErrorKind::Invalid(c), loc)
+    }
+    fn unclosed_open_double_quotation(loc: Loc) -> Self {
+        LexError::new(LexErrorKind::UnclosedOpenDoubleQuotation, loc)
     }
     fn eof(loc: Loc) -> Self {
         LexError::new(LexErrorKind::Eof, loc)
@@ -56,6 +60,7 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             // identifier and literal
             b'a'...b'z' | b'A'...b'Z' | b'_' => lex_a_token!(lex_char(input, pos)),
             b'0'...b'9' => lex_a_token!(lex_number(input, pos)),
+            b'"' => lex_a_token!(lex_string(input, pos)),
             // operator
             b'=' => {
                 match peek_char(input, pos) {
@@ -150,6 +155,23 @@ fn lex_number(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
         .unwrap();
     Ok((Token::int(n, Loc(start, end)), end))
 }
+
+fn lex_string(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
+    use std::str::from_utf8;
+
+    let start = pos;
+    let end = recognize_many(input, start, |b| !b"\n".contains(&b));
+
+    if end == start + 1 {
+        return Err(LexError::unclosed_open_double_quotation(Loc(start, end)));
+    }
+
+    let s = from_utf8(&input[start + 1..end - 1])
+        .unwrap();
+
+    Ok((Token::string(s, Loc(start, end)), end))
+}
+
 
 // operator
 fn lex_assign(input: &[u8], start: usize) -> Result<(Token, usize), LexError> {
@@ -336,6 +358,40 @@ fn test_lexer() {
                 loc: Loc(8, 13),
             },
         ])
+    );
+
+    assert_eq!(
+        lex("\"x\""),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Str("x".to_string()),
+                    literal: "x".to_string(),
+                },
+                loc: Loc(0, 3),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("\"\""),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Str("".to_string()),
+                    literal: "".to_string(),
+                },
+                loc: Loc(0, 2),
+            }
+        ])
+    );
+
+    assert_eq!(
+        lex("\""),
+        Err(LexError {
+            value: LexErrorKind::UnclosedOpenDoubleQuotation,
+            loc: Loc(0, 1),
+        })
     );
 
     assert_eq!(
