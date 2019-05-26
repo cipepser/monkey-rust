@@ -38,8 +38,7 @@ pub enum TokenKind {
     Gt,
 
     Eq,
-// TODO: implement following operator
-//    NotEq,
+    NotEq,
 
     // delimiter
     Comma,
@@ -181,6 +180,16 @@ impl Token {
             TokenStruct {
                 kind: TokenKind::Eq,
                 literal: "==".to_string(),
+            },
+            loc,
+        )
+    }
+
+    pub fn not_equal(loc: Loc) -> Self {
+        Self::new(
+            TokenStruct {
+                kind: TokenKind::NotEq,
+                literal: "!=".to_string(),
             },
             loc,
         )

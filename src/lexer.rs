@@ -74,7 +74,21 @@ fn lex(input: &str) -> Result<Vec<Token>, LexError> {
             }
             b'+' => lex_a_token!(lex_plus(input, pos)),
             b'-' => lex_a_token!(lex_minus(input, pos)),
-            b'!' => lex_a_token!(lex_bang(input, pos)),
+            b'!' => {
+                match peek_char(input, pos) {
+                    Ok(b) => {
+                        if b == b'=' {
+                            lex_a_token!(lex_not_eq(pos))
+                        } else {
+                            lex_a_token!(lex_bang(input, pos))
+                        }
+                    }
+                    Err(e) => match e.value {
+                        LexErrorKind::Eof => lex_a_token!(lex_bang(input, pos)),
+                        _ => return Err(e),
+                    }
+                }
+            }
             b'*' => lex_a_token!(lex_asterisk(input, pos)),
             b'/' => lex_a_token!(lex_slash(input, pos)),
             b'<' => lex_a_token!(lex_less_than(input, pos)),
@@ -180,6 +194,10 @@ fn lex_greater_than(input: &[u8], start: usize) -> Result<(Token, usize), LexErr
 
 fn lex_eq(pos: usize) -> Result<(Token, usize), LexError> {
     Ok((Token::equal(Loc(pos, pos + 2)), pos + 2))
+}
+
+fn lex_not_eq(pos: usize) -> Result<(Token, usize), LexError> {
+    Ok((Token::not_equal(Loc(pos, pos + 2)), pos + 2))
 }
 
 // delimiter
@@ -455,6 +473,18 @@ fn test_lexer() {
             }
         ])
     );
+    assert_eq!(
+        lex("!="),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::NotEq,
+                    literal: "!=".to_string(),
+                },
+                loc: Loc(0, 2),
+            }
+        ])
+    );
 
     // delimiter
     assert_eq!(
@@ -699,6 +729,23 @@ fn test_lexer() {
             Token::my_if(Loc(0, 2)),
             Token::ident("three", Loc(3, 8)),
             Token::equal(Loc(9, 11)),
+            Token::int(3, Loc(12, 13)),
+            Token::lbrace(Loc(14, 15)),
+            Token::my_true(Loc(16, 20)),
+            Token::rbrace(Loc(21, 22)),
+            Token::my_else(Loc(23, 27)),
+            Token::lbrace(Loc(28, 29)),
+            Token::my_false(Loc(30, 35)),
+            Token::rbrace(Loc(36, 37)),
+            Token::semicolon(Loc(37, 38)),
+        ])
+    );
+    assert_eq!(
+        lex("if three != 3 { true } else { false };"),
+        Ok(vec![
+            Token::my_if(Loc(0, 2)),
+            Token::ident("three", Loc(3, 8)),
+            Token::not_equal(Loc(9, 11)),
             Token::int(3, Loc(12, 13)),
             Token::lbrace(Loc(14, 15)),
             Token::my_true(Loc(16, 20)),
