@@ -160,16 +160,20 @@ fn lex_string(input: &[u8], pos: usize) -> Result<(Token, usize), LexError> {
     use std::str::from_utf8;
 
     let start = pos;
-    let end = recognize_many(input, start, |b| !b"\n".contains(&b));
+    let end = recognize_many(input, start + 1, |b| !b"\"".contains(&b));
 
-    if end == start + 1 {
+    println!("len: {:?}", input.len());
+    println!("start: {:?}, end: {:?}", start, end);
+
+    if end == start + 1 && input.len() <= end {
         return Err(LexError::unclosed_open_double_quotation(Loc(start, end)));
     }
+    println!("input: {:?}", &input[start..end].to_ascii_lowercase());
 
-    let s = from_utf8(&input[start + 1..end - 1])
+    let s = from_utf8(&input[start + 1..end])
         .unwrap();
 
-    Ok((Token::string(s, Loc(start, end)), end))
+    Ok((Token::string(s, Loc(start, end + 1)), end + 1))
 }
 
 
@@ -305,8 +309,7 @@ fn peek_char(input: &[u8], pos: usize) -> Result<u8, LexError> {
 }
 
 #[test]
-fn test_lexer() {
-    // identifier and literal
+fn test_lexer_identifier() {
     assert_eq!(
         lex("x"),
         Ok(vec![
@@ -359,7 +362,10 @@ fn test_lexer() {
             },
         ])
     );
+}
 
+#[test]
+fn test_lexer_string() {
     assert_eq!(
         lex("\"x\""),
         Ok(vec![
@@ -374,6 +380,22 @@ fn test_lexer() {
     );
 
     assert_eq!(
+        lex("\"hello\""),
+        Ok(vec![
+            Token {
+                value: TokenStruct {
+                    kind: TokenKind::Str("hello".to_string()),
+                    literal: "hello".to_string(),
+                },
+                loc: Loc(0, 7),
+            }
+        ])
+    );
+}
+
+#[test]
+fn test_lexer_string_blank() {
+    assert_eq!(
         lex("\"\""),
         Ok(vec![
             Token {
@@ -385,7 +407,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
+#[test]
+fn test_lexer_string_unclosed() {
     assert_eq!(
         lex("\""),
         Err(LexError {
@@ -393,7 +418,10 @@ fn test_lexer() {
             loc: Loc(0, 1),
         })
     );
+}
 
+#[test]
+fn test_lexer_number() {
     assert_eq!(
         lex("1"),
         Ok(vec![
@@ -419,8 +447,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
-    // operator
+#[test]
+fn test_lexer_operator() {
     assert_eq!(
         lex("="),
         Ok(vec![
@@ -541,8 +571,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
-    // delimiter
+#[test]
+fn test_lexer_delimiter() {
     assert_eq!(
         lex(","),
         Ok(vec![
@@ -579,9 +611,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
-
-    // brackets
+#[test]
+fn test_lexer_backets() {
     assert_eq!(
         lex("("),
         Ok(vec![
@@ -654,8 +687,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
-    // keyword
+#[test]
+fn test_lexer_keyword() {
     assert_eq!(
         lex("fn"),
         Ok(vec![
@@ -752,8 +787,10 @@ fn test_lexer() {
             }
         ])
     );
+}
 
-    // others
+#[test]
+fn test_lexer() {
     assert_eq!(
         lex("1 + 2 * 3 - -10"),
         Ok(vec![
@@ -811,6 +848,129 @@ fn test_lexer() {
             Token::my_false(Loc(30, 35)),
             Token::rbrace(Loc(36, 37)),
             Token::semicolon(Loc(37, 38)),
+        ])
+    );
+    assert_eq!(
+        lex("let five = 5;
+let ten = 10;
+let add = fn(x, y) {
+  x + y;
+};
+let result = add(five, ten);
+!-/*5;
+5 < 10 > 5;
+if (5 < 10) {
+	return true;
+} else {
+	return false;
+}
+10 == 10;
+10 != 9;
+\"foobar\"
+\"foo bar\"
+[1, 2];
+{\"foo\": \"bar\"}
+macro(x, y) { x + y; };"),
+        Ok(vec![
+            Token::my_let(Loc(0, 3)),
+            Token::ident("five", Loc(4, 8)),
+            Token::assign(Loc(9, 10)),
+            Token::int(5, Loc(11, 12)),
+            Token::semicolon(Loc(12, 13)),
+            Token::my_let(Loc(14, 17)),
+            Token::ident("ten", Loc(18, 21)),
+            Token::assign(Loc(22, 23)),
+            Token::int(10, Loc(24, 26)),
+            Token::semicolon(Loc(26, 27)),
+            Token::my_let(Loc(28, 31)),
+            Token::ident("add", Loc(32, 35)),
+            Token::assign(Loc(36, 37)),
+            Token::function(Loc(38, 40)),
+            Token::lparen(Loc(40, 41)),
+            Token::ident("x", Loc(41, 42)),
+            Token::comma(Loc(42, 43)),
+            Token::ident("y", Loc(44, 45)),
+            Token::rparen(Loc(45, 46)),
+            Token::lbrace(Loc(47, 48)),
+            Token::ident("x", Loc(51, 52)),
+            Token::plus(Loc(53, 54)),
+            Token::ident("y", Loc(55, 56)),
+            Token::semicolon(Loc(56, 57)),
+            Token::rbrace(Loc(58, 59)),
+            Token::semicolon(Loc(59, 60)),
+            Token::my_let(Loc(61, 64)),
+            Token::ident("result", Loc(65, 71)),
+            Token::assign(Loc(72, 73)),
+            Token::ident("add", Loc(74, 77)),
+            Token::lparen(Loc(77, 78)),
+            Token::ident("five", Loc(78, 82)),
+            Token::comma(Loc(82, 83)),
+            Token::ident("ten", Loc(84, 87)),
+            Token::rparen(Loc(87, 88)),
+            Token::semicolon(Loc(88, 89)),
+            Token::bang(Loc(90, 91)),
+            Token::minus(Loc(91, 92)),
+            Token::slash(Loc(92, 93)),
+            Token::asterisk(Loc(93, 94)),
+            Token::int(5, Loc(94, 95)),
+            Token::semicolon(Loc(95, 96)),
+            Token::int(5, Loc(97, 98)),
+            Token::less_than(Loc(99, 100)),
+            Token::int(10, Loc(101, 103)),
+            Token::greater_than(Loc(104, 105)),
+            Token::int(5, Loc(106, 107)),
+            Token::semicolon(Loc(107, 108)),
+            Token::my_if(Loc(109, 111)),
+            Token::lparen(Loc(112, 113)),
+            Token::int(5, Loc(113, 114)),
+            Token::less_than(Loc(115, 116)),
+            Token::int(10, Loc(117, 119)),
+            Token::rparen(Loc(119, 120)),
+            Token::lbrace(Loc(121, 122)),
+            Token::my_return(Loc(124, 130)),
+            Token::my_true(Loc(131, 135)),
+            Token::semicolon(Loc(135, 136)),
+            Token::rbrace(Loc(137, 138)),
+            Token::my_else(Loc(139, 143)),
+            Token::lbrace(Loc(144, 145)),
+            Token::my_return(Loc(147, 153)),
+            Token::my_false(Loc(154, 159)),
+            Token::semicolon(Loc(159, 160)),
+            Token::rbrace(Loc(161, 162)),
+            Token::int(10, Loc(163, 165)),
+            Token::equal(Loc(166, 168)),
+            Token::int(10, Loc(169, 171)),
+            Token::semicolon(Loc(171, 172)),
+            Token::int(10, Loc(173, 175)),
+            Token::not_equal(Loc(176, 178)),
+            Token::int(9, Loc(179, 180)),
+            Token::semicolon(Loc(180, 181)),
+            Token::string("foobar", Loc(182, 190)),
+            Token::string("foo bar", Loc(191, 200)),
+            Token::lbracket(Loc(201, 202)),
+            Token::int(1, Loc(202, 203)),
+            Token::comma(Loc(203, 204)),
+            Token::int(2, Loc(205, 206)),
+            Token::rbracket(Loc(206, 207)),
+            Token::semicolon(Loc(207, 208)),
+            Token::lbrace(Loc(209, 210)),
+            Token::string("foo", Loc(210, 215)),
+            Token::colon(Loc(215, 216)),
+            Token::string("bar", Loc(217, 222)),
+            Token::rbrace(Loc(222, 223)),
+            Token::my_macro(Loc(224, 229)),
+            Token::lparen(Loc(229, 230)),
+            Token::ident("x", Loc(230, 231)),
+            Token::comma(Loc(231, 232)),
+            Token::ident("y", Loc(233, 234)),
+            Token::rparen(Loc(234, 235)),
+            Token::lbrace(Loc(236, 237)),
+            Token::ident("x", Loc(238, 239)),
+            Token::plus(Loc(240, 241)),
+            Token::ident("y", Loc(242, 243)),
+            Token::semicolon(Loc(243, 244)),
+            Token::rbrace(Loc(245, 246)),
+            Token::semicolon(Loc(246, 247)),
         ])
     );
 }
