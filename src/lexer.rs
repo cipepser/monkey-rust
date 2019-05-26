@@ -681,4 +681,33 @@ fn test_lexer() {
             Token::int(10, Loc(13, 15)),
         ])
     );
+
+    assert_eq!(
+        lex("let five = 5;"),
+        Ok(vec![
+            Token::my_let(Loc(0, 3)),
+            Token::ident("five", Loc(4, 8)),
+            Token::assign(Loc(9, 10)),
+            Token::int(5, Loc(11, 12)),
+            Token::semicolon(Loc(12, 13)),
+        ])
+    );
+
+    assert_eq!(
+        lex("if three == 3 { true } else { false };"),
+        Ok(vec![
+            Token::my_if(Loc(0, 2)),
+            Token::ident("three", Loc(3, 8)),
+            Token::equal(Loc(9, 11)),
+            Token::int(3, Loc(12, 13)),
+            Token::lbrace(Loc(14, 15)),
+            Token::my_true(Loc(16, 20)),
+            Token::rbrace(Loc(21, 22)),
+            Token::my_else(Loc(23, 27)),
+            Token::lbrace(Loc(28, 29)),
+            Token::my_false(Loc(30, 35)),
+            Token::rbrace(Loc(36, 37)),
+            Token::semicolon(Loc(37, 38)),
+        ])
+    );
 }
