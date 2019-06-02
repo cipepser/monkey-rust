@@ -1,13 +1,5 @@
-use std::fmt::Display;
-use crate::lexer::Annot;
+use crate::ast::Ast;
 use crate::tokens::Token;
-
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-trait Node: Display {
-    fn token_literal() -> String;
-}
-
-type Ast = Annot<>;
 
 enum ParseError {}
 
