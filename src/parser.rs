@@ -15,30 +15,22 @@ pub struct Parser {
     tokens: VecDeque<Token>,
     cur_token: Token,
     peek_token: Token,
-    pos: usize,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Result<Self, ParseError> {
         let mut tokens = VecDeque::from(tokens);
-        let mut pos = 0;
 
         let cur_token = match tokens.pop_front() {
-            Some(t) => {
-                pos += 1;
-                t
-            }
+            Some(t) => t,
             None => { return Err(ParseError::Eof); }
         };
         let peek_token = match tokens.pop_front() {
-            Some(t) => {
-                pos += 1;
-                t
-            }
+            Some(t) => t,
             None => { return Err(ParseError::Eof); }
         };
 
-        Ok(Self { tokens, cur_token, peek_token, pos })
+        Ok(Self { tokens, cur_token, peek_token })
     }
 }
 
