@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use crate::lexer::{Annot, Loc};
 use crate::tokens::{Token, TokenKind};
 use crate::ast::StatementKind::LetStatement;

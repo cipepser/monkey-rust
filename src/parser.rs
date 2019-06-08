@@ -3,9 +3,7 @@ use crate::tokens::{Token, TokenKind};
 
 pub enum ParseError {}
 
-use std::iter::Peekable;
-use crate::ast::StatementKind::LetStatement;
-use crate::lexer::Loc;
+use crate::lexer::{Loc, lex};
 
 pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
     let mut tokens = tokens.into_iter().peekable();
@@ -24,6 +22,9 @@ fn test_let_statements() {
     // Token::int(5, Loc(8, 9)),
     // Token::semicolon(Loc(9, 10)),
 
+    assert!(tokens.is_ok());
+    let tokens = tokens.unwrap();
+
     let program = parse(tokens);
     assert!(program.is_ok());
     let mut program = program.unwrap();
@@ -34,8 +35,8 @@ fn test_let_statements() {
     let statement = statement.unwrap();
     assert_eq!(statement, Statement::let_statement(
         TokenKind::Ident("x".to_string()),
-        "x",
+        "x".to_string(),
         Box::new(5),
-        Loc(0, 10),
+        Loc::new(0, 10),
     ));
 }

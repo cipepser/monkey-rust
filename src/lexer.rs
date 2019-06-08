@@ -4,9 +4,16 @@ use crate::tokens::{Token, TokenStruct, TokenKind};
 pub struct Loc(usize, usize);
 
 impl Loc {
-    fn merge(&self, other: &Loc) -> Loc {
+    pub fn merge(&self, other: &Loc) -> Loc {
         use std::cmp::{max, min};
         Loc(min(self.0, other.0), max(self.1, other.1))
+    }
+
+    pub fn new(start: usize, end: usize) -> Self {
+        Self {
+            0: start,
+            1: end,
+        }
     }
 }
 
@@ -43,7 +50,7 @@ impl LexError {
     }
 }
 
-fn lex(input: &str) -> Result<Vec<Token>, LexError> {
+pub fn lex(input: &str) -> Result<Vec<Token>, LexError> {
     let mut tokens = Vec::new();
     let input = input.as_bytes();
     let mut pos = 0;
