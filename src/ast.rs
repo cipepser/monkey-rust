@@ -43,22 +43,24 @@ impl Statement {
     }
 }
 
+//#[derive(PartialEq, Debug, Clone)]
+//pub enum Valu
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum ExpressionKind {
-    IdentifierExpression { token: Token, value: String }
+    IdentifierExpression { token_kind: TokenKind, value: Box<Expression> }
 }
 
 pub type Expression = Annot<ExpressionKind>;
 
 impl Expression {
-    pub fn identifier_expression(token: Token, name: String, loc: Loc) -> Self {
-        Self {
-            value: IdentifierExpression {
-                token,
-                value: name,
-            },
-            loc,
-        }
+    pub fn identifier_expression(token_kind: TokenKind, value: Expression, loc: Loc) -> Self {
+        Self::new(
+            IdentifierExpression {
+                token_kind,
+                value: Box::new(value),
+            }, loc,
+        )
     }
 }
 

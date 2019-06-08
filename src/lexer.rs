@@ -30,7 +30,7 @@ impl<T> Annot<T> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum LexErrorKind {
+pub enum LexErrorKind {
     Invalid(char),
     UnclosedOpenDoubleQuotation,
     Eof,
