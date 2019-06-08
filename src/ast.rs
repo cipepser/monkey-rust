@@ -43,17 +43,19 @@ impl Statement {
     }
 }
 
-//#[derive(PartialEq, Debug, Clone)]
-//pub enum Valu
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum ExpressionKind {
-    IdentifierExpression { token_kind: TokenKind, value: Box<Expression> }
+    Num(u64),
+    IdentifierExpression { token_kind: TokenKind, value: Box<Expression> },
 }
 
 pub type Expression = Annot<ExpressionKind>;
 
 impl Expression {
+    pub fn num(n: u64, loc: Loc) -> Self {
+        Self::new(ExpressionKind::Num(n), loc)
+    }
+
     pub fn identifier_expression(token_kind: TokenKind, value: Expression, loc: Loc) -> Self {
         Self::new(
             IdentifierExpression {
@@ -63,7 +65,6 @@ impl Expression {
         )
     }
 }
-
 
 pub type Program = Vec<Statement>;
 

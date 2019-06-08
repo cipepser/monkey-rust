@@ -1,6 +1,7 @@
-use crate::ast::{Program, Statement};
+use crate::ast::{Program, Statement, Expression};
 use crate::tokens::{Token, TokenKind};
 
+#[derive(PartialEq, Debug, Clone)]
 pub enum ParseError {}
 
 use crate::lexer::{Loc, lex};
@@ -36,7 +37,7 @@ fn test_let_statements() {
     assert_eq!(statement, Statement::let_statement(
         TokenKind::Ident("x".to_string()),
         "x".to_string(),
-        Box::new(5),
+        Expression::num(5, Loc::new(8, 9)),
         Loc::new(0, 10),
     ));
 }
