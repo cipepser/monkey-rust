@@ -1,6 +1,6 @@
 use std::fmt::Display;
 use crate::lexer::{Annot, Loc};
-use crate::tokens::Token;
+use crate::tokens::{Token, TokenKind};
 use crate::ast::StatementKind::LetStatement;
 use crate::ast::ExpressionKind::IdentifierExpression;
 
@@ -14,7 +14,7 @@ use crate::ast::ExpressionKind::IdentifierExpression;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum StatementKind {
-    LetStatement { token: Token, name: String, value: Box<Expression> }
+    LetStatement { token_kind: TokenKind, name: String, value: Box<Expression> }
 }
 
 pub type Statement = Annot<StatementKind>;
@@ -22,17 +22,20 @@ pub type Statement = Annot<StatementKind>;
 impl Statement {
     pub fn token_literal(&self) -> String {
         match &self.value {
-            StatementKind::LetStatement { token, .. } => {
-                token.value.literal.clone()
+            StatementKind::LetStatement { token_kind, .. } => {
+                match token_kind {
+                    TokenKind::Ident(s) => s.clone(),
+                    _ => "".to_string()
+                }
             }
         }
     }
 
     // TODO: locをmergeする必要あり
-    pub fn let_statement(token: Token, name: String, expr: Expression, loc: Loc) -> Self {
+    pub fn let_statement(token_kind: TokenKind, name: String, expr: Expression, loc: Loc) -> Self {
         Self {
             value: LetStatement {
-                token,
+                token_kind,
                 name,
                 value: Box::new(expr),
             },
@@ -63,9 +66,9 @@ impl Expression {
 
 pub type Program = Vec<Statement>;
 
-impl Program {
-    pub fn new() -> Self {
-        let p = Vec::new();
-        p
-    }
-}
+//impl Program {
+//    pub fn new() -> Self {
+//        let p = Vec::new();
+//        p
+//    }
+//}
