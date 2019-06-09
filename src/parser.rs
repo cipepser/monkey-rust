@@ -4,11 +4,15 @@ use std::collections::VecDeque;
 use crate::ast::{Program, Statement, Expression};
 use crate::tokens::{Token, TokenKind};
 use crate::lexer::{Loc, lex};
+use crate::parser::Precedence::Lowest;
+use crate::parser::ParseError::NoInfixParseFn;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ParseError {
     Eof,
     UnexpectedToken(Token),
+    NoPrefixParseFn(Token),
+    NoInfixParseFn(Token),
 }
 
 //impl fmt::Display for ParseError {
@@ -23,9 +27,23 @@ pub enum ParseError {
 //    }
 //}
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub enum Precedence {
     Lowest,
+    // ==
+    Equals,
+    // > or <
+    LessGreater,
+    // +
+    Sum,
+    // *
+    Product,
+    // -X or !X
+    Prefix,
+    // myFunction(X)
+    Call,
+    // array[index]
+    Index,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -62,16 +80,32 @@ impl Parser {
         Ok(Self { tokens, cur_token, peek_token })
     }
 
+    pub fn peek_precedence(&self) -> Precedence {
+        match &self.peek_token.value.kind {
+            TokenKind::Eq => Precedence::Equals,
+            TokenKind::NotEq => Precedence::Equals,
+            TokenKind::Lt => Precedence::LessGreater,
+            TokenKind::Gt => Precedence::LessGreater,
+            TokenKind::Plus => Precedence::Sum,
+            TokenKind::Minus => Precedence::Sum,
+            TokenKind::Slash => Precedence::Product,
+            TokenKind::Asterisk => Precedence::Product,
+            TokenKind::LParen => Precedence::Call,
+            TokenKind::LBracket => Precedence::Index,
+            _ => Lowest
+        }
+    }
+
     pub fn parse_statement(&mut self) -> Result<Statement, ParseError> {
         match self.cur_token.value.kind {
             TokenKind::Let => self.parse_let_statement(),
             TokenKind::Return => {
-                unimplemented!()
-                // p.parse_return_statement()
+                unimplemented!();
+                // self.parse_return_statement()
             }
             _ => {
-                unimplemented!()
-                // p.parse_expression_statement()
+                unimplemented!();
+                // self.parse_expression_statement()
             }
         }
     }
@@ -93,6 +127,8 @@ impl Parser {
 
         let expr = parser.parse_expression(Precedence::Lowest)?;
 
+        // TODO: ここにFunction Literalの処理が必要になる
+
         if parser.peek_token.value.kind != TokenKind::SemiColon {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
@@ -103,7 +139,31 @@ impl Parser {
     }
 
     pub fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, ParseError> {
-        unimplemented!()
+        unimplemented!();
+        // prefixParseFn[token.Type]
+        // nilならの分岐⇛error処理なので、matchの_で拾う
+        // leftExp := prefix()
+        let mut left_expr = match self.cur_token.value.kind {
+            TokenKind::Int(n) => Expression::num(n, self.cur_token.loc.clone()),
+            // TODO: 他のTokenKindも生やす
+            _ => return Err(ParseError::NoPrefixParseFn(self.cur_token.clone()))
+        };
+
+        let &mut parser = &mut self;
+        while parser.peek_token.value.kind != TokenKind::SemiColon && precedence < parser.peek_precedence() {
+            match &self.peek_token.value.kind {
+                // TODO: 他のTokenKindも生やす
+                // その時はここでleft_exprを返すようにする
+                _ => return Err(ParseError::NoInfixParseFn(self.peek_token.clone()))
+            };
+            parser.next_token();
+        };
+        // セミコロンまで& precedence < p.peekPrecedence()
+        // // infixParseFn[token.Type]
+        // // error処理
+        // p.nextToken()
+        // leftExp = infix(leftExp)
+        Ok(left_expr)
     }
 }
 
@@ -114,8 +174,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
     println!("parser: {:?}", parser);
     let mut program = Program::new();
 
-    // TODO: parse_statementを実装する
-    // ループをどうやって回す？
+    // TODO: ループをどうやって回す？
 //    while parser.tokens.len() != 0 {
 //
 //
@@ -152,4 +211,12 @@ fn test_let_statements() {
         Expression::num(5, Loc::new(8, 9)),
         Loc::new(0, 10),
     ));
+}
+
+trait PrefixParseFn {
+    fn prefix() -> Result<Expression, ParseError>;
+}
+
+trait InfixParseFn {
+    fn infix(expr: Expression) -> Result<Expression, ParseError>;
 }
