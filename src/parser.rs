@@ -61,6 +61,7 @@ impl Parser {
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token))?;
 
+        // TODO: peekでNoneの場合はEofじゃない処理？
         let peek_token = tokens.front()
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token.clone()))?;
@@ -74,6 +75,7 @@ impl Parser {
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token))?;
 
+        // TODO: peekでNoneの場合はEofじゃない処理？
         let peek_token = tokens.front()
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token.clone()))?;
@@ -136,9 +138,10 @@ impl Parser {
         if parser.peek_token.value.kind != TokenKind::SemiColon {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
-//        println!("cur_token: {:?}", parser.cur_token);
-//        println!("peek_token: {:?}", parser.peek_token);
-        parser = parser.next_token()?;
+        println!("cur_token: {:?}", parser.cur_token);
+        println!("peek_token: {:?}", parser.peek_token);
+        parser = parser.next_token()?; // TODO: ここでEofなので終了してしまう
+
         loc.merge(&parser.cur_token.loc);
 
         Ok(Statement::let_statement(token_kind, name, expr, loc))
