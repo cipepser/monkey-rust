@@ -57,14 +57,13 @@ impl Parser {
     pub fn new(tokens: Vec<Token>) -> Result<Self, ParseError> {
         let mut tokens = VecDeque::from(tokens);
 
-        let cur_token = match tokens.pop_front() {
-            Some(t) => t,
-            None => { return Err(ParseError::Eof); }
-        };
-        let peek_token = match tokens.pop_front() {
-            Some(t) => t,
-            None => { return Err(ParseError::Eof); }
-        };
+        let cur_token = tokens.pop_front()
+            .ok_or(ParseError::Eof)
+            .and_then(|token| Ok(token))?;
+
+        let peek_token = tokens.pop_front()
+            .ok_or(ParseError::Eof)
+            .and_then(|token| Ok(token))?;
 
         Ok(Self { tokens, cur_token, peek_token })
     }
@@ -72,10 +71,9 @@ impl Parser {
     pub fn next_token(&mut self) -> Result<Self, ParseError> {
         let mut tokens = self.tokens.clone();
         let cur_token = self.peek_token.clone();
-        let peek_token = match tokens.pop_front() {
-            Some(t) => t,
-            None => { return Err(ParseError::Eof); }
-        };
+        let peek_token = tokens.pop_front()
+            .ok_or(ParseError::Eof)
+            .and_then(|token| Ok(token))?;
 
         Ok(Self { tokens, cur_token, peek_token })
     }
@@ -97,15 +95,16 @@ impl Parser {
     }
 
     pub fn parse_statement(&mut self) -> Result<Statement, ParseError> {
+//        println!("token in parse_statement: {:?}", self.cur_token.value.kind);
         match self.cur_token.value.kind {
             TokenKind::Let => self.parse_let_statement(),
             TokenKind::Return => {
                 unimplemented!();
-                // self.parse_return_statement()
+                // TODO: implement self.parse_return_statement()
             }
             _ => {
                 unimplemented!();
-                // self.parse_expression_statement()
+                // TODO: implement self.parse_expression_statement()
             }
         }
     }
@@ -124,6 +123,10 @@ impl Parser {
         if parser.peek_token.value.kind != TokenKind::Assign {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
+        parser = parser.next_token()?;
+        parser = parser.next_token()?;
+//        println!("cur_token: {:?}", parser.cur_token);
+//        println!("peek_token: {:?}", parser.peek_token);
 
         let expr = parser.parse_expression(Precedence::Lowest)?;
 
@@ -132,29 +135,29 @@ impl Parser {
         if parser.peek_token.value.kind != TokenKind::SemiColon {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
-        parser = self.next_token()?;
-        loc.merge(&self.cur_token.loc);
+        parser = parser.next_token()?;
+        loc.merge(&parser.cur_token.loc);
 
         Ok(Statement::let_statement(token_kind, name, expr, loc))
     }
 
     pub fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, ParseError> {
-        unimplemented!();
         // prefixParseFn[token.Type]
         // nilならの分岐⇛error処理なので、matchの_で拾う
         // leftExp := prefix()
+//        println!("parser: {:?}", self);
         let mut left_expr = match self.cur_token.value.kind {
             TokenKind::Int(n) => Expression::num(n, self.cur_token.loc.clone()),
             // TODO: 他のTokenKindも生やす
             _ => return Err(ParseError::NoPrefixParseFn(self.cur_token.clone()))
         };
 
-        let &mut parser = &mut self;
+        let parser = self;
         while parser.peek_token.value.kind != TokenKind::SemiColon && precedence < parser.peek_precedence() {
-            match &self.peek_token.value.kind {
+            match &parser.peek_token.value.kind {
                 // TODO: 他のTokenKindも生やす
                 // その時はここでleft_exprを返すようにする
-                _ => return Err(ParseError::NoInfixParseFn(self.peek_token.clone()))
+                _ => return Err(ParseError::NoInfixParseFn(parser.peek_token.clone()))
             };
             parser.next_token();
         };
@@ -169,17 +172,15 @@ impl Parser {
 
 pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
     let mut parser = Parser::new(tokens)?;
-    println!("parser: {:?}", parser);
-    let mut parser = parser.next_token()?;
-    println!("parser: {:?}", parser);
+//    println!("parser: {:?}", parser);
     let mut program = Program::new();
 
     // TODO: ループをどうやって回す？
-//    while parser.tokens.len() != 0 {
-//
-//
-//    }
-
+    while parser.tokens.len() != 0 {
+        let statement = parser.parse_statement()?;
+        program.push(statement.clone());
+        parser = parser.next_token()?;
+    }
 
     Ok(program)
 }
@@ -187,17 +188,19 @@ pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
 #[test]
 fn test_let_statements() {
     let tokens = lex("let x = 5;");
-// This `tokens` has following Tokens.
-// Token::my_let(Loc(0, 3)),
-// Token::ident("x", Loc(4, 5)),
-// Token::assign(Loc(6, 7)),
-// Token::int(5, Loc(8, 9)),
-// Token::semicolon(Loc(9, 10)),
+    // This `tokens` has following Tokens.
+    // Token::my_let(Loc(0, 3)),
+    // Token::ident("x", Loc(4, 5)),
+    // Token::assign(Loc(6, 7)),
+    // Token::int(5, Loc(8, 9)),
+    // Token::semicolon(Loc(9, 10)),
 
     assert!(tokens.is_ok());
     let tokens = tokens.unwrap();
 
     let program = parse(tokens);
+//    println!("program: {:?}", program);
+
     assert!(program.is_ok());
     let mut program = program.unwrap();
     assert_eq!(program.len(), 1);
