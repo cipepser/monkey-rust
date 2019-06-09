@@ -30,7 +30,6 @@ impl Statement {
         }
     }
 
-    // TODO: locをmergeする必要あり
     pub fn let_statement(token_kind: TokenKind, name: String, expr: Expression, loc: Loc) -> Self {
         Self {
             value: LetStatement {

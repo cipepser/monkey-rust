@@ -1,16 +1,34 @@
-use crate::ast::{Program, Statement, Expression};
-use crate::tokens::{Token, TokenKind};
-
-#[derive(PartialEq, Debug, Clone)]
-pub enum ParseError {
-    Eof
-}
-
-use crate::lexer::{Loc, lex};
+use std::fmt;
 use std::iter::Peekable;
 use std::collections::VecDeque;
+use crate::ast::{Program, Statement, Expression};
+use crate::tokens::{Token, TokenKind};
+use crate::lexer::{Loc, lex};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ParseError {
+    Eof,
+    UnexpectedToken(Token),
+}
+
+//impl fmt::Display for ParseError {
+//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//        use self::ParseError::*;
+//        match self {
+//            Eof => write!(f, "End of file"),
+//            UnexpectedToken(tok) => write!(f,
+//                                           "{}: token '{}' is unexpected",
+//                                           tok.loc, tok.value),
+//        }
+//    }
+//}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Precedence {
+    Lowest,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Parser {
     tokens: VecDeque<Token>,
     cur_token: Token,
@@ -42,6 +60,50 @@ impl Parser {
         };
 
         Ok(Self { tokens, cur_token, peek_token })
+    }
+
+    pub fn parse_statement(&mut self) -> Result<Statement, ParseError> {
+        match self.cur_token.value.kind {
+            TokenKind::Let => self.parse_let_statement(),
+            TokenKind::Return => {
+                unimplemented!()
+                // p.parse_return_statement()
+            }
+            _ => {
+                unimplemented!()
+                // p.parse_expression_statement()
+            }
+        }
+    }
+
+    pub fn parse_let_statement(&mut self) -> Result<Statement, ParseError> {
+        let mut loc = self.cur_token.loc.clone();
+
+        let token_kind = self.cur_token.value.kind.clone();
+
+        let name = match &self.peek_token.value.kind {
+            TokenKind::Ident(s) => s.clone(),
+            _ => return Err(ParseError::UnexpectedToken(self.peek_token.clone()))
+        };
+
+        let mut parser = self.next_token()?;
+        if parser.peek_token.value.kind != TokenKind::Assign {
+            return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
+        }
+
+        let expr = parser.parse_expression(Precedence::Lowest)?;
+
+        if parser.peek_token.value.kind != TokenKind::SemiColon {
+            return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
+        }
+        parser = self.next_token()?;
+        loc.merge(&self.cur_token.loc);
+
+        Ok(Statement::let_statement(token_kind, name, expr, loc))
+    }
+
+    pub fn parse_expression(&mut self, precedence: Precedence) -> Result<Expression, ParseError> {
+        unimplemented!()
     }
 }
 
