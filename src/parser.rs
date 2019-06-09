@@ -32,12 +32,33 @@ impl Parser {
 
         Ok(Self { tokens, cur_token, peek_token })
     }
+
+    pub fn next_token(&mut self) -> Result<Self, ParseError> {
+        let mut tokens = self.tokens.clone();
+        let cur_token = self.peek_token.clone();
+        let peek_token = match tokens.pop_front() {
+            Some(t) => t,
+            None => { return Err(ParseError::Eof); }
+        };
+
+        Ok(Self { tokens, cur_token, peek_token })
+    }
 }
 
 pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
-    let parser = Parser::new(tokens);
-    println!("parser: {:?}", parser.unwrap());
+    let mut parser = Parser::new(tokens)?;
+    println!("parser: {:?}", parser);
+    let mut parser = parser.next_token()?;
+    println!("parser: {:?}", parser);
     let mut program = Program::new();
+
+    // TODO: parse_statementを実装する
+    // ループをどうやって回す？
+//    while parser.tokens.len() != 0 {
+//
+//
+//    }
+
 
     Ok(program)
 }
