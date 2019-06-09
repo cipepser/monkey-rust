@@ -61,19 +61,22 @@ impl Parser {
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token))?;
 
-        let peek_token = tokens.pop_front()
+        let peek_token = tokens.front()
             .ok_or(ParseError::Eof)
-            .and_then(|token| Ok(token))?;
+            .and_then(|token| Ok(token.clone()))?;
 
         Ok(Self { tokens, cur_token, peek_token })
     }
 
     pub fn next_token(&mut self) -> Result<Self, ParseError> {
         let mut tokens = self.tokens.clone();
-        let cur_token = self.peek_token.clone();
-        let peek_token = tokens.pop_front()
+        let cur_token = tokens.pop_front()
             .ok_or(ParseError::Eof)
             .and_then(|token| Ok(token))?;
+
+        let peek_token = tokens.front()
+            .ok_or(ParseError::Eof)
+            .and_then(|token| Ok(token.clone()))?;
 
         Ok(Self { tokens, cur_token, peek_token })
     }
@@ -125,8 +128,6 @@ impl Parser {
         }
         parser = parser.next_token()?;
         parser = parser.next_token()?;
-//        println!("cur_token: {:?}", parser.cur_token);
-//        println!("peek_token: {:?}", parser.peek_token);
 
         let expr = parser.parse_expression(Precedence::Lowest)?;
 
@@ -135,6 +136,8 @@ impl Parser {
         if parser.peek_token.value.kind != TokenKind::SemiColon {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
+//        println!("cur_token: {:?}", parser.cur_token);
+//        println!("peek_token: {:?}", parser.peek_token);
         parser = parser.next_token()?;
         loc.merge(&parser.cur_token.loc);
 
@@ -153,19 +156,23 @@ impl Parser {
         };
 
         let parser = self;
+//        println!("parser: {:?}", parser);
+//        println!("cur_token: {:?}", parser.cur_token);
+//        println!("peek_token: {:?}", parser.peek_token);
         while parser.peek_token.value.kind != TokenKind::SemiColon && precedence < parser.peek_precedence() {
             match &parser.peek_token.value.kind {
                 // TODO: 他のTokenKindも生やす
                 // その時はここでleft_exprを返すようにする
                 _ => return Err(ParseError::NoInfixParseFn(parser.peek_token.clone()))
             };
-            parser.next_token();
+//            parser = parser.next_token()?;
         };
         // セミコロンまで& precedence < p.peekPrecedence()
         // // infixParseFn[token.Type]
         // // error処理
         // p.nextToken()
         // leftExp = infix(leftExp)
+//        parser = parser.next_token()?;
         Ok(left_expr)
     }
 }
@@ -175,8 +182,7 @@ pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
 //    println!("parser: {:?}", parser);
     let mut program = Program::new();
 
-    // TODO: ループをどうやって回す？
-    while parser.tokens.len() != 0 {
+    while parser.tokens.len() != 1 {
         let statement = parser.parse_statement()?;
         program.push(statement.clone());
         parser = parser.next_token()?;
@@ -199,7 +205,7 @@ fn test_let_statements() {
     let tokens = tokens.unwrap();
 
     let program = parse(tokens);
-//    println!("program: {:?}", program);
+    println!("program: {:?}", program);
 
     assert!(program.is_ok());
     let mut program = program.unwrap();
