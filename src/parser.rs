@@ -69,6 +69,7 @@ impl Parser {
         Ok(Self { tokens, cur_token, peek_token })
     }
 
+    // 内部のtokensをconsumeしていく必要がある？
     pub fn next_token(&mut self) -> Result<Self, ParseError> {
         let mut tokens = self.tokens.clone();
         let cur_token = tokens.pop_front()
@@ -100,7 +101,7 @@ impl Parser {
     }
 
     pub fn parse_statement(&mut self) -> Result<Statement, ParseError> {
-//        println!("token in parse_statement: {:?}", self.cur_token.value.kind);
+        println!("token in parse_statement: {:?}", self.cur_token.value.kind);
         match self.cur_token.value.kind {
             TokenKind::Let => self.parse_let_statement(),
             TokenKind::Return => {
@@ -138,9 +139,17 @@ impl Parser {
         if parser.peek_token.value.kind != TokenKind::SemiColon {
             return Err(ParseError::UnexpectedToken(parser.peek_token.clone()));
         }
-        println!("cur_token: {:?}", parser.cur_token);
-        println!("peek_token: {:?}", parser.peek_token);
-        parser = parser.next_token()?; // TODO: ここでEofなので終了してしまう
+//        println!("cur_token: {:?}", parser.cur_token);
+//        println!("peek_token: {:?}", parser.peek_token);
+//        println!("parser: {:?}", parser);
+        parser = match parser.next_token() {
+            Ok(p) => p,
+            Err(_) => {
+                loc.merge(&parser.peek_token.loc);
+                return Ok(Statement::let_statement(token_kind, name, expr, loc));
+            }
+        }; // TODO: ここでEofなので終了してしまう
+//        println!("parser: {:?}", parser);
 
         loc.merge(&parser.cur_token.loc);
 
@@ -183,9 +192,12 @@ impl Parser {
 pub fn parse(tokens: Vec<Token>) -> Result<Program, ParseError> {
     let mut parser = Parser::new(tokens)?;
 //    println!("parser: {:?}", parser);
+//    println!("cur_token: {:?}", parser.cur_token);
+//    println!("peek_token: {:?}", parser.peek_token);
     let mut program = Program::new();
 
     while parser.tokens.len() != 1 {
+//        println!("cur_token: {:?}", parser.cur_token);
         let statement = parser.parse_statement()?;
         program.push(statement.clone());
         parser = parser.next_token()?;
